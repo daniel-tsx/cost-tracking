@@ -1,7 +1,7 @@
 import { getMonthlyRecords, getProducts } from '@/app/actions'
 import { EntriesList } from '@/components/entries-list'
-import { AddEntryDialog } from '@/components/add-entry-dialog'
-import { HugeiconsIcon } from '@hugeicons/react'
+import { AddEntryButton } from '@/components/add-entry-button'
+import { EmptyState } from '@/components/empty-state'
 import { File01Icon } from '@hugeicons/core-free-icons'
 
 export const dynamic = 'force-dynamic'
@@ -13,37 +13,34 @@ export default async function EntriesPage() {
   ])
 
   return (
-    <div className="space-y-10">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm text-muted-foreground mb-1">Records</p>
-          <h1 className="text-3xl font-bold tracking-tight">Monthly Entries</h1>
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            Records
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">
+            Monthly entries
+          </h1>
         </div>
-        {products.length > 0 && <AddEntryDialog products={products} />}
+        {products.length > 0 && <AddEntryButton products={products} />}
       </div>
 
       {products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="flex items-center justify-center size-20 rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.04] mb-6">
-            <HugeiconsIcon icon={File01Icon} className="size-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-medium mb-2">No products yet</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Add products first before creating monthly entries.
-          </p>
-        </div>
+        <EmptyState
+          icon={File01Icon}
+          title="No products yet"
+          description="Add a product first, then record monthly revenue and costs for it."
+        />
       ) : records.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="flex items-center justify-center size-20 rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.04] mb-6">
-            <HugeiconsIcon icon={File01Icon} className="size-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-medium mb-2">No entries yet</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Click &quot;Add Entry&quot; to record your first monthly data.
-          </p>
-        </div>
+        <EmptyState
+          icon={File01Icon}
+          title="No entries yet"
+          description="Record your first month of revenue and costs to start tracking profit."
+          action={<AddEntryButton products={products} />}
+        />
       ) : (
-        <EntriesList records={records} />
+        <EntriesList records={records} products={products} />
       )}
     </div>
   )
