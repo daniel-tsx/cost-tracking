@@ -25,8 +25,9 @@ export function AddProductDialog() {
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async () => {
+    if (!name.trim()) return
     setSaving(true)
-    await createProduct(name, description)
+    await createProduct(name.trim(), description.trim())
     setSaving(false)
     setOpen(false)
     setName('')
@@ -47,10 +48,10 @@ export function AddProductDialog() {
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center gap-3 mb-1">
-            <div className="flex items-center justify-center size-10 rounded-xl bg-violet-500/10 ring-1 ring-violet-500/20">
-              <HugeiconsIcon icon={PackageIcon} className="size-5 text-violet-400" />
+            <div className="flex items-center justify-center size-10 rounded-xl bg-primary/10">
+              <HugeiconsIcon icon={PackageIcon} className="size-5 text-primary" />
             </div>
-            <DialogTitle>Add Product</DialogTitle>
+            <DialogTitle>Add product</DialogTitle>
           </div>
         </DialogHeader>
         <div className="space-y-4 pt-2">
