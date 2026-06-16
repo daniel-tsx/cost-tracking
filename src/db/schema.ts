@@ -8,6 +8,8 @@ import {
   unique,
 } from "drizzle-orm/pg-core"
 
+export * from "./auth-schema"
+
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
