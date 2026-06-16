@@ -12,6 +12,8 @@ A lightweight internal web app to manually track monthly maintenance costs and r
 - **Theming:** next-themes (light / dark / system)
 - **Database:** Neon (Serverless Postgres)
 - **ORM:** Drizzle ORM
+- **Auth:** better-auth (email/password) — per-user data isolation
+- **Email:** Resend (password-reset delivery)
 - **UI:** shadcn / Base UI components
 - **Charts:** Recharts
 - **Package Manager:** pnpm
@@ -30,13 +32,23 @@ A lightweight internal web app to manually track monthly maintenance costs and r
 pnpm install
 ```
 
-Copy `.env.local` and fill in your Neon connection string:
+Copy `.env.example` to `.env.local` and fill it in:
 
 ```
+# Neon Postgres connection string
 DATABASE_URL=postgresql://user:password@ep-xxx.us-east-2.aws.neon.tech/dbname?sslmode=require
+
+# Auth (better-auth) — generate a secret with: openssl rand -base64 32
+BETTER_AUTH_SECRET=your-32-byte-secret
+BETTER_AUTH_URL=http://localhost:3000
+
+# Resend — required for real password-reset emails.
+# If RESEND_API_KEY is empty, the reset link is logged to the server console.
+RESEND_API_KEY=
+EMAIL_FROM=CostTracker <onboarding@resend.dev>
 ```
 
-Push the database schema:
+Push the database schema (creates the app tables **and** the auth tables):
 
 ```bash
 pnpm db:push
@@ -57,6 +69,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Monthly Entries** — Create and **edit** entries with multiple cost items per product per month; expandable rows reveal the per-service cost breakdown and computed cost/profit/margin. Includes inline validation, a live projected-profit preview, and filter / sort / search.
 - **One entry per period** — A unique constraint on `(product, month, year)` prevents duplicate entries that would double-count; the form surfaces a friendly message instead of failing.
 - **Light / dark theme** — System-aware theme with a header toggle, built entirely on design-system tokens.
+- **Accounts & security** — Email/password sign-up and sign-in, with forgot/reset and change-password flows. Every account only sees its own products and entries; all pages are gated behind authentication.
 
 ## Database Commands
 
@@ -71,32 +84,32 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```
 src/
+  middleware.ts             Auth route guard (redirects to /login)
   app/
-    layout.tsx              Root layout, theme provider, header
-    page.tsx                Dashboard page (server)
-    actions.ts              Server actions (CRUD + aggregation)
-    products/page.tsx       Product management
-    entries/page.tsx        Monthly entry list
+    layout.tsx              Root layout (fonts + theme provider)
     globals.css             Tailwind v4 theme tokens (light + dark)
+    actions.ts              Server actions (CRUD + aggregation, user-scoped)
+    api/auth/[...all]/      better-auth request handler
+    (auth)/                 Public auth pages (centered, no app chrome)
+      login, signup, forgot-password, reset-password
+    (app)/                  Authenticated app (header + nav + user menu)
+      page.tsx              Dashboard
+      products/, entries/   Product + entry management
+      account/             Account settings (change password)
   components/
-    main-nav.tsx            Active-route navigation
-    theme-provider.tsx      next-themes provider
-    theme-toggle.tsx        Light/dark toggle
-    dashboard-overview.tsx  Range selector, KPIs, breakdown
-    dashboard-chart.tsx     Recharts composed chart
-    entry-dialog.tsx        Create/edit entry form + validation
-    add-entry-button.tsx    "Add entry" trigger
-    entries-list.tsx        Entries table (expand, filter, sort)
-    add-product-dialog.tsx  Product creation dialog
-    products-table.tsx      Product list with edit/delete
-    confirm-dialog.tsx      Reusable delete confirmation
-    empty-state.tsx         Reusable empty state
+    main-nav, theme-*, user-menu, logo
+    dashboard-overview/-chart, entry-dialog, entries-list
+    products-table, add-*-dialog/button
+    change-password-form, confirm-dialog, empty-state
     ui/                     shadcn / Base UI primitives
   db/
-    schema.ts               Drizzle schema definitions
+    schema.ts               App schema (re-exports auth-schema)
+    auth-schema.ts          better-auth tables (generated)
   lib/
-    db.ts                   Database connection
-    utils.ts                Utility functions
+    auth.ts                 better-auth server config
+    auth-client.ts          better-auth React client
+    auth-helpers.ts         getSessionUser / requireUserId
+    db.ts, utils.ts
 ```
 
-See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) for theming tokens and layout patterns.
+See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) for theming tokens and layout patterns, and [docs/AUTH.md](docs/AUTH.md) for the authentication model.
