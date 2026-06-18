@@ -11,6 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { formatMoney, type Currency } from '@/lib/currency'
 
 export type ChartPoint = {
   label: string
@@ -20,19 +21,18 @@ export type ChartPoint = {
   margin: number | null
 }
 
-const fmtCurrency = (v: number) =>
-  new Intl.NumberFormat('en-US', {
+const LOCALES: Record<Currency, string> = {
+  USD: 'en-US',
+  VND: 'vi-VN',
+  EUR: 'de-DE',
+}
+
+const compactFmt = (v: number, currency: Currency) =>
+  new Intl.NumberFormat(LOCALES[currency] ?? 'en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency,
     notation: 'compact',
     maximumFractionDigits: 1,
-  }).format(v)
-
-const fmtFull = (v: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
   }).format(v)
 
 const series: Record<string, { name: string; color: string }> = {
@@ -42,8 +42,8 @@ const series: Record<string, { name: string; color: string }> = {
   margin: { name: 'Margin', color: 'var(--chart-5)' },
 }
 
-function CustomTooltip(props: Record<string, unknown>) {
-  const { active, payload, label } = props
+function CustomTooltip(props: Record<string, unknown> & { currency: Currency }) {
+  const { active, payload, label, currency } = props
   if (!active || !Array.isArray(payload) || !payload.length) return null
 
   return (
@@ -63,7 +63,9 @@ function CustomTooltip(props: Record<string, unknown>) {
               />
               <span className="text-muted-foreground">{entry.name as string}</span>
               <span className="ml-auto pl-4 font-medium tabular-nums text-foreground">
-                {key === 'margin' ? `${value.toFixed(1)}%` : fmtFull(value)}
+                {key === 'margin'
+                  ? `${value.toFixed(1)}%`
+                  : formatMoney(value, currency, { compact: true })}
               </span>
             </div>
           )
@@ -73,7 +75,13 @@ function CustomTooltip(props: Record<string, unknown>) {
   )
 }
 
-export function DashboardChart({ data }: { data: ChartPoint[] }) {
+export function DashboardChart({
+  data,
+  currency,
+}: {
+  data: ChartPoint[]
+  currency: Currency
+}) {
   const tickStyle = {
     fill: 'var(--muted-foreground)',
     fontSize: 11,
@@ -105,7 +113,7 @@ export function DashboardChart({ data }: { data: ChartPoint[] }) {
           axisLine={false}
           tickLine={false}
           tick={tickStyle}
-          tickFormatter={fmtCurrency}
+          tickFormatter={(v) => compactFmt(v, currency)}
           width={56}
         />
         <YAxis
@@ -119,7 +127,10 @@ export function DashboardChart({ data }: { data: ChartPoint[] }) {
         />
         <Tooltip
           content={(props) => (
-            <CustomTooltip {...(props as Record<string, unknown>)} />
+            <CustomTooltip
+              {...(props as Record<string, unknown>)}
+              currency={currency}
+            />
           )}
           cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
         />

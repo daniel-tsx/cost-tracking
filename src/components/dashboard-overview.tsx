@@ -11,10 +11,14 @@ import {
   ArrowDownRight01Icon,
   ChartHistogramIcon,
   PackageIcon,
+  PieChartIcon,
+  AlertCircleIcon,
+  InformationCircleIcon,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 import { DashboardChart, type ChartPoint } from '@/components/dashboard-chart'
-import type { DashboardRow } from '@/app/actions'
+import { formatMoney, type Currency } from '@/lib/currency'
+import type { DashboardRow, Insight, CostBreakdown } from '@/app/actions'
 
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -30,23 +34,17 @@ const RANGES = [
 
 type RangeId = (typeof RANGES)[number]['id']
 
-const fmtMoney = (v: number) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(v)
-
 const idx = (year: number, month: number) => year * 12 + (month - 1)
 const idxLabel = (i: number) =>
   `${MONTHS[((i % 12) + 12) % 12]} ${String(Math.floor(i / 12)).slice(2)}`
 
 type Window = { start: number; end: number; prev: { start: number; end: number } | null }
 
+/** Anchor windows to the latest *recorded* month, not the calendar month. */
 function resolveWindow(range: RangeId, rows: DashboardRow[]): Window | null {
-  const now = new Date()
-  const anchor = idx(now.getFullYear(), now.getMonth() + 1)
+  if (rows.length === 0) return null
+  const all = rows.map((r) => idx(r.year, r.month))
+  const anchor = Math.max(...all)
 
   if (range === '6m' || range === '12m') {
     const span = range === '6m' ? 6 : 12
@@ -57,17 +55,15 @@ function resolveWindow(range: RangeId, rows: DashboardRow[]): Window | null {
     }
   }
   if (range === 'ytd') {
-    const start = idx(now.getFullYear(), 1)
+    const year = Math.floor(anchor / 12)
     return {
-      start,
+      start: idx(year, 1),
       end: anchor,
-      prev: { start: idx(now.getFullYear() - 1, 1), end: anchor - 12 },
+      prev: { start: idx(year - 1, 1), end: anchor - 12 },
     }
   }
   // all
-  if (rows.length === 0) return null
-  const all = rows.map((r) => idx(r.year, r.month))
-  return { start: Math.min(...all), end: Math.max(...all), prev: null }
+  return { start: Math.min(...all), end: anchor, prev: null }
 }
 
 function sumRange(rows: DashboardRow[], start: number, end: number) {
@@ -146,8 +142,19 @@ function Delta({
   )
 }
 
-export function DashboardOverview({ rows }: { rows: DashboardRow[] }) {
+export function DashboardOverview({
+  rows,
+  insights,
+  breakdown,
+  currency,
+}: {
+  rows: DashboardRow[]
+  insights: Insight[]
+  breakdown: CostBreakdown
+  currency: Currency
+}) {
   const [range, setRange] = useState<RangeId>('12m')
+  const fmtMoney = (v: number) => formatMoney(v, currency, { compact: true })
 
   const view = useMemo(() => {
     const win = resolveWindow(range, rows)
@@ -168,14 +175,14 @@ export function DashboardOverview({ rows }: { rows: DashboardRow[] }) {
     for (const r of rows) {
       const i = idx(r.year, r.month)
       if (i < win.start || i > win.end) continue
-      const cur = byProduct.get(r.productId) ?? {
+      const curP = byProduct.get(r.productId) ?? {
         name: r.productName ?? 'Unknown',
         revenue: 0,
         cost: 0,
       }
-      cur.revenue += r.revenue
-      cur.cost += r.cost
-      byProduct.set(r.productId, cur)
+      curP.revenue += r.revenue
+      curP.cost += r.cost
+      byProduct.set(r.productId, curP)
     }
     const products = [...byProduct.entries()]
       .map(([id, p]) => ({
@@ -184,7 +191,7 @@ export function DashboardOverview({ rows }: { rows: DashboardRow[] }) {
         revenue: p.revenue,
         cost: p.cost,
         profit: p.revenue - p.cost,
-        margin: p.revenue > 0 ? (p.revenue - p.cost) / p.revenue * 100 : 0,
+        margin: p.revenue > 0 ? ((p.revenue - p.cost) / p.revenue) * 100 : 0,
       }))
       .sort((a, b) => b.profit - a.profit)
     const maxAbsProfit = Math.max(1, ...products.map((p) => Math.abs(p.profit)))
@@ -198,7 +205,6 @@ export function DashboardOverview({ rows }: { rows: DashboardRow[] }) {
         profit: prev ? pctChange(cur.profit, prev.profit) : null,
         margin: prevMargin === null ? null : curMargin - prevMargin,
       },
-      hasPrev: !!prev,
       monthly,
       products,
       maxAbsProfit,
@@ -286,6 +292,8 @@ export function DashboardOverview({ rows }: { rows: DashboardRow[] }) {
         </div>
       </div>
 
+      {insights.length > 0 && <InsightsPanel insights={insights} />}
+
       {!view || !view.hasData ? (
         <EmptyState />
       ) : (
@@ -333,8 +341,23 @@ export function DashboardOverview({ rows }: { rows: DashboardRow[] }) {
               <h2 className="text-sm font-semibold">Monthly performance</h2>
               <span className="text-xs text-muted-foreground">· {rangeLabel}</span>
             </div>
-            <DashboardChart data={view.monthly} />
+            <DashboardChart data={view.monthly} currency={currency} />
           </div>
+
+          {(breakdown.byCategory.length > 0 || breakdown.byService.length > 0) && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <BreakdownCard
+                title="Cost by category"
+                rows={breakdown.byCategory}
+                currency={currency}
+              />
+              <BreakdownCard
+                title="Cost by provider"
+                rows={breakdown.byService}
+                currency={currency}
+              />
+            </div>
+          )}
 
           <div className="rounded-2xl border border-border bg-card p-6">
             <div className="mb-5 flex items-center gap-2">
@@ -402,6 +425,90 @@ export function DashboardOverview({ rows }: { rows: DashboardRow[] }) {
             )}
           </div>
         </>
+      )}
+    </div>
+  )
+}
+
+function InsightsPanel({ insights }: { insights: Insight[] }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="mb-4 flex items-center gap-2">
+        <HugeiconsIcon icon={AlertCircleIcon} className="size-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold">Insights</h2>
+        <span className="text-xs text-muted-foreground">
+          · {insights.length} to review
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {insights.slice(0, 8).map((it) => (
+          <div
+            key={it.id}
+            className={cn(
+              'flex gap-2.5 rounded-lg border px-3 py-2.5',
+              it.severity === 'warning'
+                ? 'border-destructive/20 bg-destructive/5'
+                : 'border-border bg-muted/30'
+            )}
+          >
+            <HugeiconsIcon
+              icon={
+                it.severity === 'warning' ? AlertCircleIcon : InformationCircleIcon
+              }
+              className={cn(
+                'mt-0.5 size-4 shrink-0',
+                it.severity === 'warning' ? 'text-destructive' : 'text-muted-foreground'
+              )}
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-medium">{it.title}</p>
+              <p className="text-xs text-muted-foreground">{it.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function BreakdownCard({
+  title,
+  rows,
+  currency,
+}: {
+  title: string
+  rows: { key: string; amount: number }[]
+  currency: Currency
+}) {
+  const top = rows.slice(0, 6)
+  const max = Math.max(1, ...top.map((r) => r.amount))
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="mb-4 flex items-center gap-2">
+        <HugeiconsIcon icon={PieChartIcon} className="size-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold">{title}</h2>
+      </div>
+      {top.length === 0 ? (
+        <p className="py-4 text-center text-sm text-muted-foreground">No costs yet.</p>
+      ) : (
+        <div className="space-y-2.5">
+          {top.map((r) => (
+            <div key={r.key} className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="truncate text-muted-foreground">{r.key}</span>
+                <span className="tabular-nums">
+                  {formatMoney(r.amount, currency, { compact: true })}
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-chart-4"
+                  style={{ width: `${(r.amount / max) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
