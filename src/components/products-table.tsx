@@ -24,19 +24,29 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { updateProduct, deleteProduct } from '@/app/actions'
+import { formatMoney, type Currency } from '@/lib/currency'
 
 type Product = {
   id: number
   name: string
   description: string | null
+  monthlyBudget: string | null
 }
 
-export function ProductsTable({ products }: { products: Product[] }) {
+export function ProductsTable({
+  products,
+  currency,
+}: {
+  products: Product[]
+  currency: Currency
+}) {
   const router = useRouter()
   const [editing, setEditing] = useState<Product | null>(null)
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
+  const [editBudget, setEditBudget] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<Product | null>(null)
   const [pendingDelete, setPendingDelete] = useState(false)
 
@@ -44,13 +54,25 @@ export function ProductsTable({ products }: { products: Product[] }) {
     setEditing(p)
     setEditName(p.name)
     setEditDesc(p.description ?? '')
+    setEditBudget(p.monthlyBudget ?? '')
+    setError(null)
   }
 
   const handleSave = async () => {
     if (!editing || !editName.trim()) return
+    setError(null)
     setSaving(true)
-    await updateProduct(editing.id, editName.trim(), editDesc.trim())
+    const res = await updateProduct(
+      editing.id,
+      editName.trim(),
+      editDesc.trim(),
+      editBudget.trim() || undefined
+    )
     setSaving(false)
+    if (!res.ok) {
+      setError(res.error)
+      return
+    }
     setEditing(null)
     router.refresh()
   }
@@ -76,6 +98,9 @@ export function ProductsTable({ products }: { products: Product[] }) {
               <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">
                 Description
               </TableHead>
+              <TableHead className="hidden text-right text-xs uppercase tracking-wider text-muted-foreground sm:table-cell">
+                Budget
+              </TableHead>
               <TableHead className="w-[88px] pr-6 text-right text-xs uppercase tracking-wider text-muted-foreground">
                 Actions
               </TableHead>
@@ -98,6 +123,13 @@ export function ProductsTable({ products }: { products: Product[] }) {
                 <TableCell className="max-w-xs truncate text-muted-foreground">
                   {p.description || (
                     <span className="text-muted-foreground/50">No description</span>
+                  )}
+                </TableCell>
+                <TableCell className="hidden text-right tabular-nums text-muted-foreground sm:table-cell">
+                  {p.monthlyBudget ? (
+                    formatMoney(Number(p.monthlyBudget), currency)
+                  ) : (
+                    <span className="text-muted-foreground/50">—</span>
                   )}
                 </TableCell>
                 <TableCell className="pr-6">
@@ -155,6 +187,24 @@ export function ProductsTable({ products }: { products: Product[] }) {
                 rows={3}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-budget">Monthly cost budget</Label>
+              <Input
+                id="edit-budget"
+                type="number"
+                step="0.01"
+                min="0"
+                inputMode="decimal"
+                value={editBudget}
+                onChange={(e) => setEditBudget(e.target.value)}
+                placeholder="optional"
+              />
+            </div>
+            {error && (
+              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEditing(null)}>
                 Cancel

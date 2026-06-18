@@ -7,13 +7,19 @@ import {
   DashboardSquare01Icon,
   PackageIcon,
   File01Icon,
+  CloudServerIcon,
+  RepeatIcon,
+  DistributionIcon,
 } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
   { href: '/', label: 'Dashboard', icon: DashboardSquare01Icon },
   { href: '/products', label: 'Products', icon: PackageIcon },
+  { href: '/services', label: 'Services', icon: CloudServerIcon },
   { href: '/entries', label: 'Entries', icon: File01Icon },
+  { href: '/templates', label: 'Templates', icon: RepeatIcon },
+  { href: '/shared-costs', label: 'Shared', icon: DistributionIcon },
 ]
 
 export function MainNav() {

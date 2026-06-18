@@ -22,16 +22,28 @@ export function AddProductDialog() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [budget, setBudget] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async () => {
     if (!name.trim()) return
+    setError(null)
     setSaving(true)
-    await createProduct(name.trim(), description.trim())
+    const res = await createProduct(
+      name.trim(),
+      description.trim(),
+      budget.trim() || undefined
+    )
     setSaving(false)
+    if (!res.ok) {
+      setError(res.error)
+      return
+    }
     setOpen(false)
     setName('')
     setDescription('')
+    setBudget('')
     router.refresh()
   }
 
@@ -74,6 +86,24 @@ export function AddProductDialog() {
               rows={3}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="budget">Monthly cost budget (optional)</Label>
+            <Input
+              id="budget"
+              type="number"
+              step="0.01"
+              min="0"
+              inputMode="decimal"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              placeholder="e.g. 200.00"
+            />
+          </div>
+          {error && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel

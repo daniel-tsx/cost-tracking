@@ -1,4 +1,4 @@
-import { getProducts } from '@/app/actions'
+import { getProducts, getUserSettings } from '@/app/actions'
 import { ProductsTable } from '@/components/products-table'
 import { AddProductDialog } from '@/components/add-product-dialog'
 import { EmptyState } from '@/components/empty-state'
@@ -7,7 +7,10 @@ import { PackageIcon } from '@hugeicons/core-free-icons'
 export const dynamic = 'force-dynamic'
 
 export default async function ProductsPage() {
-  const products = await getProducts()
+  const [products, settings] = await Promise.all([
+    getProducts(),
+    getUserSettings(),
+  ])
 
   return (
     <div className="space-y-8">
@@ -29,7 +32,7 @@ export default async function ProductsPage() {
           action={<AddProductDialog />}
         />
       ) : (
-        <ProductsTable products={products} />
+        <ProductsTable products={products} currency={settings.currency} />
       )}
     </div>
   )
