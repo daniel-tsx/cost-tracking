@@ -36,12 +36,12 @@ const money = (label: string) =>
     .refine((v) => Number(v) <= MAX_MONEY, `${label} is too large`)
     .transform((v) => Number(v).toFixed(2))
 
-/** Optional money — empty/undefined becomes null. */
+/** Optional money — empty/undefined/null becomes null. */
 const optionalMoney = (label: string) =>
   z
     .string()
     .trim()
-    .optional()
+    .nullish()
     .transform((v) => (v == null || v === "" ? null : v))
     .refine(
       (v) => v == null || /^\d+(\.\d{1,2})?$/.test(v),
@@ -62,7 +62,7 @@ const optionalText = (max: number) =>
     .string()
     .trim()
     .max(max, `Must be ${max} characters or fewer`)
-    .optional()
+    .nullish()
     .transform((v) => (v ? v : null))
 
 const optionalUrl = z
