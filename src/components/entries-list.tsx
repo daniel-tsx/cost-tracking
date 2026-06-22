@@ -100,6 +100,34 @@ export function EntriesList({
       .sort(SORTS[sort].fn)
   }, [records, query, productFilter, yearFilter, sort])
 
+  const filtersActive =
+    query.trim() !== '' || productFilter !== 'all' || yearFilter !== 'all'
+
+  const clearFilters = () => {
+    setQuery('')
+    setProductFilter('all')
+    setYearFilter('all')
+  }
+
+  // Totals for the *currently filtered* view — a scorecard that responds to
+  // the filters above, so the table reads as an analysis, not just a list.
+  const summary = useMemo(() => {
+    let revenue = 0
+    let cost = 0
+    for (const r of visible) {
+      revenue += Number(r.totalRevenue)
+      cost += r.expenses.reduce((s, e) => s + Number(e.amount), 0)
+    }
+    const profit = revenue - cost
+    return {
+      revenue,
+      cost,
+      profit,
+      margin: revenue > 0 ? (profit / revenue) * 100 : null,
+    }
+  }, [visible])
+  const fmtCompact = (v: number) => formatMoney(v, currency, { compact: true })
+
   const toggle = (id: number) => {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -179,6 +207,30 @@ export function EntriesList({
         </div>
       </div>
 
+      {visible.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+          <span className="text-muted-foreground">
+            <span className="font-semibold tabular-nums text-foreground">
+              {visible.length}
+            </span>{' '}
+            {visible.length === 1 ? 'entry' : 'entries'}
+            {filtersActive && ' matched'}
+          </span>
+          <span className="hidden h-4 w-px bg-border sm:block" />
+          <SummaryStat dot="bg-success" label="Revenue" value={fmtCompact(summary.revenue)} />
+          <SummaryStat dot="bg-destructive" label="Costs" value={fmtCompact(summary.cost)} />
+          <SummaryStat
+            dot="bg-primary"
+            label="Net"
+            value={fmtCompact(summary.profit)}
+            valueClass={summary.profit < 0 ? 'text-destructive' : undefined}
+          />
+          {summary.margin !== null && (
+            <SummaryStat label="Margin" value={`${summary.margin.toFixed(1)}%`} />
+          )}
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <Table>
           <TableHeader>
@@ -208,11 +260,23 @@ export function EntriesList({
           <TableBody>
             {visible.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={8}
-                  className="py-12 text-center text-sm text-muted-foreground"
-                >
-                  No entries match your filters.
+                <TableCell colSpan={8} className="py-14 text-center">
+                  <div className="mx-auto flex max-w-xs flex-col items-center gap-3">
+                    <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
+                      <HugeiconsIcon
+                        icon={Search01Icon}
+                        className="size-5 text-muted-foreground"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      No entries match the current filters.
+                    </p>
+                    {filtersActive && (
+                      <Button variant="outline" size="sm" onClick={clearFilters}>
+                        Clear filters
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -260,6 +324,26 @@ export function EntriesList({
         onConfirm={handleDelete}
       />
     </>
+  )
+}
+
+function SummaryStat({
+  dot,
+  label,
+  value,
+  valueClass,
+}: {
+  dot?: string
+  label: string
+  value: string
+  valueClass?: string
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {dot && <span className={cn('size-1.5 rounded-full', dot)} />}
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn('font-medium tabular-nums', valueClass)}>{value}</span>
+    </span>
   )
 }
 
@@ -326,7 +410,18 @@ function EntryRows({
         >
           {fmtMoney(t.profit)}
         </TableCell>
-        <TableCell className="hidden text-right tabular-nums text-muted-foreground sm:table-cell">
+        <TableCell
+          className={cn(
+            'hidden text-right tabular-nums sm:table-cell',
+            t.margin === null
+              ? 'text-muted-foreground'
+              : t.margin < 0
+                ? 'text-destructive'
+                : t.margin >= 20
+                  ? 'text-success'
+                  : 'text-muted-foreground'
+          )}
+        >
           {t.margin === null ? '—' : `${t.margin.toFixed(1)}%`}
         </TableCell>
         <TableCell className="pr-6" onClick={(e) => e.stopPropagation()}>
