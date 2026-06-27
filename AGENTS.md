@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
@@ -9,6 +9,7 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
 
 Before implementing:
+
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
@@ -31,12 +32,14 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 **Touch only what you must. Clean up only your own mess.**
 
 When editing existing code:
+
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it - don't delete it.
 
 When your changes create orphans:
+
 - Remove imports/variables/functions that YOUR changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
@@ -47,11 +50,13 @@ The test: Every changed line should trace directly to the user's request.
 **Define success criteria. Loop until verified.**
 
 Transform tasks into verifiable goals:
+
 - "Add validation" → "Write tests for invalid inputs, then make them pass"
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
 For multi-step tasks, state a brief plan:
+
 ```
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
@@ -68,13 +73,58 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - Always check the latest documentation when implementing new features and upgrade packages when newer versions are available.
 - Prefer pnpm as the package manager for new projects.
-- On Windows, prefer Command Prompt (`cmd`/`cmd.exe`) for shell commands instead of PowerShell unless a task explicitly requires PowerShell.
 - Always review existing implementations in the project to ensure consistent patterns across the app.
 - Write clean code following best practices and optimize for performance.
 - Don't use linear gradient background unless I tell you or it's a really necessary case
 - Prefer to use color on project's design system over custom color
 
-<!-- BEGIN:nextjs-agent-rules -->
+## UI work
+
+For ANY user-facing UI in this repo — pages, components, charts, tables,
+and especially empty / loading / error states — follow the `eastbase-premium-ui`
+skill before writing or editing. Read it via the Skill tool; don't reproduce
+generic shadcn/SaaS defaults from memory.
+
+## Windows shell (Command Prompt)
+
+**Prefer `cmd.exe` for all terminal commands on Windows** — not PowerShell.
+
+| Do (cmd) | Don't (PowerShell) |
+| --- | --- |
+| `cmd /c "cd /d path && pnpm test"` | `cd path; pnpm test` |
+| `set FOO=bar && command` | `$env:FOO = "bar"; command` |
+| Chain with `&&` | Chain with `;` or pipelines when unnecessary |
+
+Only use PowerShell when the user explicitly requests it.
+
+**Important:** This file guides command *syntax*. Cursor may still spawn PowerShell for the agent shell on Windows. To change that, see **Cursor shell setup** below and `.vscode/settings.json` in this repo.
+
+### Cursor shell setup (Windows)
+
+1. **Workspace** — this repo includes `.vscode/settings.json` with `terminal.integrated.automationProfile.windows` → `cmd.exe`.
+2. **User settings** — in `%APPDATA%\Cursor\User\settings.json`, add the same `automationProfile` (your `defaultProfile` alone does not control the agent):
+   ```json
+   "terminal.integrated.automationProfile.windows": {
+     "path": "C:\\Windows\\System32\\cmd.exe"
+   }
+   ```
+3. **Cursor Settings** — enable **Legacy Terminal Tool** (`Ctrl+Shift+J` → Agents; exact menu label varies by version), then restart Cursor and run **Terminal: Kill All Terminals**.
+4. **Optional user setting** (forum-reported, not official docs): `"cursor.useLegacyTerminalTool": true`
+5. **Project rule** — `.cursor/rules/windows-cmd-shell.mdc` reinforces cmd syntax every session.
+
+If commands still run in PowerShell, that is a known Cursor Windows limitation; keep using cmd-compatible syntax anyway.
+
+## Documentation as Working Memory
+
+Use docs as durable project memory, but verify against code before acting.
+
+- Before starting non-trivial work, read `README.md`, `docs/AGENT_START_HERE.md` if present, and any feature doc directly related to the task.
+- For UI, pages, or styling changes, also read `docs/DESIGN_SYSTEM.md` for layout patterns and tokens.
+- Treat docs as guidance, not absolute truth. If docs and code disagree, trust the code, surface the mismatch, and update the doc only if the task changes durable behavior.
+- Update docs when changing architecture, routes/APIs, environment variables, database schema, billing/auth/security behavior, testing commands, or user-visible feature behavior.
+- Do not update docs for incidental implementation details, temporary debugging, tiny refactors, or changes that are already obvious from code/tests.
+- Every new or edited doc should make its status clear: `current`, `planned`, `shipped`, `historical`, or `superseded`.
+- Prefer one current source-of-truth doc per feature. Move completed plans and stale reviews to `docs/archive/` instead of leaving them beside current operational docs.
 
 # This is NOT the Next.js you know
 
