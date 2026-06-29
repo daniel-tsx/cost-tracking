@@ -1,0 +1,18 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CostTracker">
+  <style>
+    .mk { stroke: #6D3DE0; }
+    .nd { fill: #6D3DE0; transform-box: fill-box; transform-origin: center; }
+    @media (prefers-color-scheme: dark) {
+      .mk { stroke: #8B5CF6; }
+      .nd { fill: #8B5CF6; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .mk { animation: ct-draw 0.9s cubic-bezier(0.4, 0, 0.2, 1) both; }
+      .nd { animation: ct-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.55s both; }
+    }
+    @keyframes ct-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+    @keyframes ct-pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+  </style>
+  <path class="mk" d="M 22.42 23.13 A 9.6 9.6 0 1 1 21.7 9.9" fill="none" stroke-width="3.8" stroke-linecap="round" pathLength="100" stroke-dasharray="100"/>
+  <circle class="nd" cx="23.6" cy="7.7" r="2.9"/>
+</svg>

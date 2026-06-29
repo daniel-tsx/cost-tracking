@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Logo } from '@/components/logo'
+import { AnimatedLogo } from '@/components/logo'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 export default function AuthLayout({
@@ -18,7 +18,7 @@ export default function AuthLayout({
             href="/"
             className="mb-8 flex items-center justify-center gap-2.5"
           >
-            <Logo className="size-9" />
+            <AnimatedLogo className="size-9" />
             <span className="text-xl font-semibold tracking-tight">
               CostTracker
             </span>

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { DM_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -15,9 +15,38 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ['400', '500', '600'],
 })
 
+const appUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'
+
 export const metadata: Metadata = {
-  title: 'Cost & Profit Tracker',
-  description: 'Track product costs and profits',
+  metadataBase: new URL(appUrl),
+  title: {
+    default: 'CostTracker — Cost & Profit Tracker',
+    template: '%s · CostTracker',
+  },
+  description:
+    'Track product costs, revenue and profit margins — month over month.',
+  applicationName: 'CostTracker',
+  openGraph: {
+    type: 'website',
+    siteName: 'CostTracker',
+    title: 'CostTracker — Cost & Profit Tracker',
+    description:
+      'Track product costs, revenue and profit margins — month over month.',
+    url: appUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CostTracker — Cost & Profit Tracker',
+    description:
+      'Track product costs, revenue and profit margins — month over month.',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fafafa' },
+    { media: '(prefers-color-scheme: dark)', color: '#19171d' },
+  ],
 }
 
 export default function RootLayout({

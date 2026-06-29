@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { MainNav } from '@/components/main-nav'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Logo } from '@/components/logo'
+import { AnimatedLogo } from '@/components/logo'
 import { UserMenu } from '@/components/user-menu'
 import { getSessionUser } from '@/lib/auth-helpers'
 import { getUserSettings } from '@/app/actions'
@@ -21,7 +21,7 @@ export default async function AppLayout({
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center px-4 sm:px-6">
           <Link href="/" className="group mr-3 flex items-center gap-2.5 sm:mr-8">
-            <Logo className="size-8 transition-transform group-hover:scale-105" />
+            <AnimatedLogo className="size-8 transition-transform group-hover:scale-105" />
             <span className="hidden text-lg font-semibold tracking-tight sm:inline">
               CostTracker
             </span>

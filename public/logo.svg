@@ -1,11 +1,19 @@
-<svg width="232" height="40" viewBox="0 0 232 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g transform="translate(4 4)">
-    <rect width="32" height="32" rx="7" fill="#724DE7"/>
-    <rect x="7.36" y="16.8" width="4.16" height="6.4" rx="1.6" fill="#fff"/>
-    <rect x="13.92" y="12.96" width="4.16" height="10.24" rx="1.6" fill="#fff"/>
-    <rect x="20.48" y="8.48" width="4.16" height="14.72" rx="1.6" fill="#fff"/>
+<svg width="186" height="40" viewBox="0 0 186 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CostTracker">
+  <style>
+    .vlt-s { stroke: #6D3DE0; }
+    .vlt-f { fill: #6D3DE0; }
+    .ink   { fill: #52525B; }
+    @media (prefers-color-scheme: dark) {
+      .vlt-s { stroke: #8B5CF6; }
+      .vlt-f { fill: #8B5CF6; }
+      .ink   { fill: #A1A1AA; }
+    }
+  </style>
+  <g transform="translate(0 4)">
+    <path class="vlt-s" d="M 22.42 23.13 A 9.6 9.6 0 1 1 21.7 9.9" fill="none" stroke-width="3.8" stroke-linecap="round"/>
+    <circle class="vlt-f" cx="23.6" cy="7.7" r="2.9"/>
   </g>
-  <text x="48" y="27" font-family="'DM Sans', 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.4">
-    <tspan fill="#724DE7">Cost</tspan><tspan fill="#71717A">Tracker</tspan>
+  <text x="41" y="28" font-family="'DM Sans','Segoe UI',system-ui,-apple-system,sans-serif" font-size="23" font-weight="700" letter-spacing="-0.6">
+    <tspan class="vlt-f">Cost</tspan><tspan class="ink">Tracker</tspan>
   </text>
 </svg>
